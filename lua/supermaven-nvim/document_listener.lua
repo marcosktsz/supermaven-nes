@@ -1,6 +1,7 @@
 local binary = require("supermaven-nvim.binary.binary_handler")
 local preview = require("supermaven-nvim.completion_preview")
 local config = require("supermaven-nvim.config")
+local nes = require("supermaven-nvim.nes")
 
 local M = {
   augroup = nil,
@@ -18,6 +19,11 @@ M.setup = function()
         return
       end
       binary:on_update(buffer, file_name, "text_changed")
+      
+      if config.nes and config.nes.enabled then
+        -- Auto-request NES suggestions on text changes
+        nes.request_nes(buffer)
+      end
     end,
   })
 
@@ -50,6 +56,14 @@ M.setup = function()
         return
       end
       binary:on_update(buffer, file_name, "cursor")
+      
+      if config.nes and config.nes.enabled then
+        nes.on_cursor_moved(buffer)
+        -- Auto-request NES suggestions on cursor movement
+        if not nes.has_suggestions() then
+          nes.request_nes(buffer)
+        end
+      end
     end,
   })
 

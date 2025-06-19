@@ -600,4 +600,39 @@ function BinaryLifecycle:document_changed(full_path, buffer_text)
   self:send_json(outgoing_message)
 end
 
+function BinaryLifecycle:request_nes_suggestions(bufnr, buffer_context, cursor_line, cursor_char, callback)
+  if not self:is_running() then
+    log:warn("Binary is not running, cannot request NES suggestions")
+    return
+  end
+  
+  local file_path = vim.api.nvim_buf_get_name(bufnr)
+  local nes_request = {
+    kind = "nes_request",
+    path = file_path,
+    content = buffer_context,
+    cursor = {
+      line = cursor_line,
+      character = cursor_char
+    }
+  }
+  
+  self:send_json(nes_request)
+  
+  if callback then
+    local mock_edits = {
+      {
+        range = {
+          start = { line = cursor_line, character = cursor_char },
+          ["end"] = { line = cursor_line, character = cursor_char }
+        },
+        newText = "// TODO: Implement this function"
+      }
+    }
+    vim.schedule(function()
+      callback(mock_edits)
+    end)
+  end
+end
+
 return BinaryLifecycle
